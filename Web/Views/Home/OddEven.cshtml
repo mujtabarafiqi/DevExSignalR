@@ -30,13 +30,6 @@
                                     .ID("chart0")
                                     .Animation(s => s.Enabled(false))
                                     .Palette(VizPalette.Soft)
-                                    .CommonAxisSettings(s=>s
-                                        .Visible(false)
-                                        .Color("white")
-                                        .Label(x=>x
-                                            .Font(c=>c.Color("White"))
-                                        )
-                                    )
                                     .CommonSeriesSettings(s => s
                                         .ArgumentField("xVal")
                                         .Type(SeriesType.Line)
@@ -68,13 +61,6 @@
                                         .VerticalAlignment(VerticalEdge.Bottom)
                                         .HorizontalAlignment(HorizontalAlignment.Center)
                                     )
-                                    .ValueAxis(s =>
-                                    {
-                                        s.Add()
-                                         .Title(a => a
-                                            .Text("Cost ($)")
-                                            .Font(b => b.Color("white")));
-                                    })
                                .DataSource(new List<Data.CustomChartItem>())
                                )
 </div>
