@@ -1,0 +1,135 @@
+﻿
+@using DevExtreme.AspNet.Mvc
+
+
+<link href="~/css/devextreme/dx.common.css" rel="stylesheet" />
+
+@*<script src="~/lib/jquery/dist/jquery.js"></script>*@
+<script src="~/lib/signalr/dist/browser/signalr.js"></script>
+<script src="~/js/devextreme/cldr.js"></script>
+<script src="~/js/devextreme/cldr/event.js"></script>
+<script src="~/js/devextreme/cldr/supplemental.js"></script>
+<script src="~/js/devextreme/cldr/unresolved.js"></script>
+
+<script src="~/js/devextreme/globalize.js"></script>
+<script src="~/js/devextreme/globalize/message.js"></script>
+<script src="~/js/devextreme/globalize/number.js"></script>
+<script src="~/js/devextreme/globalize/currency.js"></script>
+<script src="~/js/devextreme/globalize/date.js"></script>
+
+<script src="~/js/devextreme/dx.all.js"></script>
+<script src="~/js/devextreme/aspnet/dx.aspnet.mvc.js"></script>
+<script src="~/js/devextreme/aspnet/dx.aspnet.data.js"></script>
+<br />
+<br />
+<br />
+<br />
+<h4>@(ViewBag.NumType == "odd"? "Odd Series": "EvenSeries")</h4>
+<div id="cost-container">
+    @(Html.DevExtreme().Chart()
+                                    .ID("chart0")
+                                    .Animation(s => s.Enabled(false))
+                                    .Palette(VizPalette.Soft)
+                                    .CommonAxisSettings(s=>s
+                                        .Visible(false)
+                                        .Color("white")
+                                        .Label(x=>x
+                                            .Font(c=>c.Color("White"))
+                                        )
+                                    )
+                                    .CommonSeriesSettings(s => s
+                                        .ArgumentField("xVal")
+                                        .Type(SeriesType.Line)
+                                        .HoverMode(ChartSeriesHoverMode.AllArgumentPoints)
+                                        .SelectionMode(ChartSeriesSelectionMode.AllArgumentPoints)
+                                        .Label(l => l
+                                            .Visible(true)
+                                            .Format(f => f
+                                                .Type(Format.FixedPoint)
+                                                .Precision(1)
+                                            )
+                                        )
+                                    )
+                                    .Tooltip(e => e
+                                            .Enabled(true)
+                                            .Format(Format.Decimal))
+                                    .Series(s =>
+                                    {
+                                        s.Add().Name("Numbers").ValueField("yVal").Type(SeriesType.Line).Color("rgb(0,128,255)");
+                                    })
+                                    .Export(e => e.Enabled(false))
+                                    .Legend(l => l
+                                        .Font(c => c.Color("White"))
+                                        .Border(x=>x
+                                            .Color("black")
+                                            .Visible(true))
+                                        .ItemTextPosition(Position.Right)
+                                        .BackgroundColor("black")
+                                        .VerticalAlignment(VerticalEdge.Bottom)
+                                        .HorizontalAlignment(HorizontalAlignment.Center)
+                                    )
+                                    .ValueAxis(s =>
+                                    {
+                                        s.Add()
+                                         .Title(a => a
+                                            .Text("Cost ($)")
+                                            .Font(b => b.Color("white")));
+                                    })
+                               .DataSource(new List<Data.CustomChartItem>())
+                               )
+</div>
+
+@section Scripts{
+    <script type="text/javascript">
+        var numType = '@ViewBag.NumType'
+        console.log(numType);
+
+        var substationConnectionGlobal = new signalR.HubConnectionBuilder()
+            .withUrl("/numberHub", {
+                skipNegotiation: true,
+                transport: signalR.HttpTransportType.WebSockets
+            })
+            .configureLogging(signalR.LogLevel.Information)
+            .build();
+
+        $(function () {
+            substationConnectionGlobal.start()
+                .then(function () {
+                    var store = new DevExpress.data.CustomStore({
+                        load: function () {
+                            return substationConnectionGlobal.invoke("getData", numType);
+                        }
+                    });
+                    store.load()
+                        .done(function (data) {
+                            updateNumbers(data);
+                        })
+                        .fail(function (error) {
+
+                        });
+                    substationConnectionGlobal.on("broadcastNumbers", function (data) {
+                        updateNumbers(data);
+                    });
+
+                });
+        });
+            function updateNumbers(data) {
+                // Load vs Cost for Motors (Bar Chart)
+                if (data.numSeries != null) {
+                    devExtremeChart(chart0, data.numSeries);
+                }
+            }
+
+            function devExtremeChart(id, source) {
+
+                try {
+                    $(id).dxChart({
+                        dataSource: source
+                    }).dxChart("instance");
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+
+    </script>
+}
