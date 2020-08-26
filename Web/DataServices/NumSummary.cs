@@ -29,7 +29,7 @@ namespace Web.DataServices
             HubContext = hubContext;
 
             _updateInterval = TimeSpan.FromMilliseconds(int.Parse(configuration["SystemSettings:SignalRUpdateInterval"]));
-            _timer = new Timer(UpdateSubstationSummaryDashboard, null, _updateInterval, _updateInterval);
+            //_timer = new Timer(UpdateSubstationSummaryDashboard, null, _updateInterval, _updateInterval);
 
         }
 
@@ -55,7 +55,8 @@ namespace Web.DataServices
 
         private void BroadcastNumbers()
         {
-            HubContext.Clients.All.SendAsync("broadcastNumbers", _result, NumType);
+            if (!string.IsNullOrWhiteSpace(NumType))
+                HubContext.Clients.Group(NumType).SendAsync("broadcastNumbers", _result, NumType);
         }
     }
 }
